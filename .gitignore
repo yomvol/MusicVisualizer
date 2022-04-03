@@ -1,3 +1,6 @@
+#Large files
+*.ipch
+
 # Prerequisites
 *.d
 
