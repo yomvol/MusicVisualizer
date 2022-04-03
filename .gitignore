@@ -1,3 +1,10 @@
+#Large files
+*.ipch
+*.mp3
+*.mp4
+*.flac
+*.m4a
+
 # Prerequisites
 *.d
 
