@@ -1,5 +1,7 @@
 This music visualizer has been made in order to practice in creating C++ desktop app. It utilizes Cinder framework. A musical track is loaded into RAM, its next 20 milliseconds get analyzed with Fast Fourier Transform every cycle. All of the animations are dependent on a signal`s amplitude and frequency spectrum at a given moment.
 
+Upon opening choose a track. Supported file types are the following: .wav, .mp3, .mp4, .m4a, .flac.
+
 Copyright (c) 2014, The Cinder Project
 
  This code is intended to be used with the Cinder C++ library, http://libcinder.org
