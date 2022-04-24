@@ -24,12 +24,11 @@
 #pragma once
 
 #include "cinder/audio/Buffer.h"
-
 #include "cinder/Vector.h"
 #include "cinder/PolyLine.h"
 #include "cinder/gl/VboMesh.h"
-
 #include <vector>
+#include "Marching Squares.h"
 
 class RGBMask {
 public:
@@ -41,8 +40,9 @@ public:
 
 void drawColorfulFlash(const ci::audio::Buffer& buffer, const std::vector<float>& magSpectrum, const ci::Rectf& bounds,
 	const RGBMask& mask);
+void drawConcentricShapes(const ci::audio::Buffer& buffer, const std::vector<float>& magSpectrum, const ci::Rectf& bounds);
 
-void drawAudioBuffer( const ci::audio::Buffer &buffer, const ci::Rectf &bounds, bool drawFrame = false, const ci::ColorA &color = ci::ColorA( 0, 0.9f, 0, 1 ) );
+//void drawAudioBuffer( const ci::audio::Buffer &buffer, const ci::Rectf &bounds, bool drawFrame = false, const ci::ColorA &color = ci::ColorA( 0, 0.9f, 0, 1 ) );
 
 class Waveform {
   public:

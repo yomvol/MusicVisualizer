@@ -49,8 +49,8 @@ RGBMask::RGBMask(float num) // Compute RGB mask once and use it until the end
 		int k = 150000; // Amplifying coeff
 		double mean = numOfBins / 2;
 		double deviation = 230.0; // To be picked experimentally
-		red_exp.get()->push_back( A * exp(-(double)bin / T));
-		blue_exp.get()->push_back( A * exp(double(bin - numOfBins) / T));
+		blue_exp.get()->push_back( A * exp(-(double)bin / T));
+		red_exp.get()->push_back( A * exp(double(bin - numOfBins) / T));
 		double power = -0.5 * pow(((bin - mean) / deviation), 2);
 		double divisor = 1 / (deviation * sqrt(2 * M_PI));
 		double bell = k * divisor * exp(power); // A slappy implementation. Peak is about 260 with this k.
@@ -106,8 +106,21 @@ void drawColorfulFlash(const audio::Buffer& buffer, const vector<float>& magSpec
 
 	if (!waveform.getPoints().empty())
 		gl::draw(waveform);
-	yOffset += waveHeight;
 	gl::color(255.0f, 255.0f, 255.0f); // Restoring default color for other elements to draw
+}
+
+void drawConcentricShapes(const audio::Buffer& buffer, const vector<float>& magSpectrum, const Rectf& bounds)
+{
+	const float* channel = buffer.getChannel(0);
+	// y^2 + x^2 = r^2 -- the most basic implicit function
+	
+
+	const vec2 center = bounds.getCenter();
+	const float radOffset = 20.0f;
+	// loudness influences amount of "circles", frequency spetrcum influence shapes 0 - 1000
+	// 0 - 20 triangle, 21 - 40 square, 41 - 60 pentagon, 61 - 80 hexagon, 81 - 100 circle
+	
+	MS::marchingSquares(channel, magSpectrum, bounds);
 }
 
 //void drawAudioBuffer( const audio::Buffer &buffer, const Rectf &bounds, bool drawFrame, const ci::ColorA &color )

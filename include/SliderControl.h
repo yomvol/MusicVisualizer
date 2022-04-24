@@ -7,10 +7,13 @@
 class SliderControl
 {
 public:
-	SliderControl(float level);
-	void drawSlider(ci::Rectf area);
+	SliderControl(float level, ci::Rectf area);
+	void drawSlider();
 	void setLevel(float level);
+	ci::Rectf getArea();
+	void setArea(ci::Rectf area);
 
 private:
-	float mLevel;
+	float mLevel; // from 0 to 2.0 representing 200% max volume
+	ci::Rectf mArea;
 };

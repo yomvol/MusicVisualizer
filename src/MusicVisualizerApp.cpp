@@ -18,6 +18,7 @@ public:
 	void update() override;
 	void draw() override;
 	void mouseWheel(MouseEvent event) override;
+	void mouseDrag(MouseEvent event) override;
 
 private:
 	audio::ContextRef ctx;
@@ -38,7 +39,7 @@ void MusicVisualizerApp::setup()
 {
 	audio::SourceFileRef sourceFile;
 	DataSourceRef file;
-#define FILE_BROWSING 1
+#define FILE_BROWSING 0
 #if FILE_BROWSING
 	vector<string> supportedExtensions;
 	supportedExtensions.push_back("wav");
@@ -55,7 +56,7 @@ void MusicVisualizerApp::setup()
 		terminate();
 	}
 #else
-	DataSourceRef file = loadAsset("watching-the-waves.wav");
+	file = loadAsset("watching-the-waves.wav");
 #endif
 	try {
 		sourceFile = audio::load(file);
@@ -74,12 +75,19 @@ void MusicVisualizerApp::setup()
 	console() << "File samplerate is: " << sourceFile->getSampleRateNative() << endl;
 	mVolumeControl = ctx->makeNode(new audio::GainNode);
 	mVolumeControl->setValue(1.0f);
-	mSlider = make_unique<SliderControl>(1.0f);
+
+	int rectLength = 150, rightXOffset = 50, rectHeight = 8, bottomYOffset = 30;
+	mSlider = make_unique<SliderControl>(1.0f, Rectf(getWindowWidth() - rightXOffset - rectLength,
+		getWindowHeight() - rectHeight - bottomYOffset, getWindowWidth() - rightXOffset,
+		getWindowHeight() - bottomYOffset));
+
 	auto amplMonitorFormat = audio::MonitorNode::Format().windowSize(1024);
 	mPCMMonitor = ctx->makeNode(new audio::MonitorNode(amplMonitorFormat));
 	// By providing an FFT size double that of the window size, we 'zero-pad' the analysis data, which gives
 	// an increase in resolution of the resulting spectrum data.
 	auto freqMonitorFormat = audio::MonitorSpectralNode::Format().fftSize(2048).windowSize(1024);
+	// If sample rate of a sound is 44100, then by Nyquist`s theorem it should possess frequnces up to 22050.
+	// Frequency of the 1024`th bin equals 1024 * sample rate / FFT size = 22050.
 	mSpectrMonitor = ctx->makeNode(new audio::MonitorSpectralNode(freqMonitorFormat));
 	mMask = make_unique<RGBMask>(mSpectrMonitor->getNumBins());
 
@@ -96,19 +104,40 @@ void MusicVisualizerApp::setup()
 
 void MusicVisualizerApp::mouseDown(MouseEvent event)
 {
-	if (isPaused == true)
+	vec2 click = event.getPos();
+	if (mSlider->getArea().contains(click))
 	{
-		mBufferPlayer->start();
-		mBufferPlayer->seekToTime(mPassedSec);
-		isPaused = false;
+		float volume = 2.0f * (click.x - mSlider->getArea().x1) / (mSlider->getArea().x2 - mSlider->getArea().x1);
+		mSlider->setLevel(volume);
+		mVolumeControl->setValue(volume);
 	}
 	else
 	{
-		double devident = ctx->getNumProcessedSeconds();
-		double divisor = mBufferPlayer->getLoopEndTime();
-		mPassedSec = glm::mod(devident, divisor);
-		mBufferPlayer->stop();
-		isPaused = true;
+		if (isPaused == true)
+		{
+			mBufferPlayer->start();
+			mBufferPlayer->seekToTime(mPassedSec);
+			isPaused = false;
+		}
+		else
+		{
+			double devident = ctx->getNumProcessedSeconds();
+			double divisor = mBufferPlayer->getLoopEndTime();
+			mPassedSec = glm::mod(devident, divisor);
+			mBufferPlayer->stop();
+			isPaused = true;
+		}
+	}
+}
+
+void MusicVisualizerApp::mouseDrag(MouseEvent event)
+{
+	vec2 click = event.getPos();
+	if (mSlider->getArea().contains(click))
+	{
+		float volume = 2.0f * (click.x - mSlider->getArea().x1) / (mSlider->getArea().x2 - mSlider->getArea().x1);
+		mSlider->setLevel(volume);
+		mVolumeControl->setValue(volume);
 	}
 }
 
@@ -129,6 +158,10 @@ void MusicVisualizerApp::update()
 {
 	if (mSpectrMonitor && mSpectrMonitor->getNumConnectedInputs())
 		mMagSpectrum = mSpectrMonitor->getMagSpectrum();
+	int rectLength = 150, rightXOffset = 50, rectHeight = 8, bottomYOffset = 30;
+	mSlider->setArea(Rectf(getWindowWidth() - rightXOffset - rectLength,
+		getWindowHeight() - rectHeight - bottomYOffset, getWindowWidth() - rightXOffset,
+		getWindowHeight() - bottomYOffset));
 }
 
 void MusicVisualizerApp::draw()
@@ -143,15 +176,14 @@ void MusicVisualizerApp::draw()
 		float boundaryPxY = 9.0f * 1;
 		mBoundaryRect = Rectf(0.0f + boundaryPxX, getWindowHeight() - boundaryPxY - 100.0f, getWindowWidth() - boundaryPxX,
 			0.0f + boundaryPxY);
-		drawColorfulFlash(buffer, mMagSpectrum, mBoundaryRect, *mMask);
+		//drawColorfulFlash(buffer, mMagSpectrum, mBoundaryRect, *mMask);
+		drawConcentricShapes(buffer, mMagSpectrum, mBoundaryRect);
 	}
 
 	vec2 hintPos(20.0f, getWindowHeight() - 50);
 	gl::drawString("Press LMB to pause track, use mouse wheel to control sound volume", hintPos, ColorA(1, 1, 1, 1),
 		Font("Helvetica", 30.0f));
-	int rectLength = 150, rightXOffset = 50, rectHeight = 8, bottomYOffset = 30;
-	mSlider->drawSlider(Rectf(getWindowWidth() - rightXOffset - rectLength, getWindowHeight() - bottomYOffset,
-		getWindowWidth() - rightXOffset, getWindowHeight() - bottomYOffset - rectHeight));
+	mSlider->drawSlider();
 }
 
 CINDER_APP(MusicVisualizerApp, RendererGl(RendererGl::Options().msaa(4)), [](App::Settings* settings) {
