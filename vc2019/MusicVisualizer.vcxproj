@@ -102,11 +102,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\AudioDrawUtils.cpp" />
+    <ClCompile Include="..\src\Marching Squares.cpp" />
+    <ClCompile Include="..\src\MathUtils.cpp" />
     <ClCompile Include="..\src\MusicVisualizerApp.cpp" />
     <ClCompile Include="..\src\SliderControl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\AudioDrawUtils.h" />
+    <ClInclude Include="..\include\Marching Squares.h" />
+    <ClInclude Include="..\include\MathUtils.h" />
     <ClInclude Include="..\include\Resources.h" />
     <ClInclude Include="..\include\SliderControl.h" />
   </ItemGroup>

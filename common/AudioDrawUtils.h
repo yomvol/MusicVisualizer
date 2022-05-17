@@ -24,12 +24,11 @@
 #pragma once
 
 #include "cinder/audio/Buffer.h"
-
 #include "cinder/Vector.h"
 #include "cinder/PolyLine.h"
-#include "cinder/gl/VboMesh.h"
-
+//#include "cinder/gl/VboMesh.h"
 #include <vector>
+#include "Marching Squares.h"
 
 class RGBMask {
 public:
@@ -41,51 +40,54 @@ public:
 
 void drawColorfulFlash(const ci::audio::Buffer& buffer, const std::vector<float>& magSpectrum, const ci::Rectf& bounds,
 	const RGBMask& mask);
+void drawConcentricShapes(const ci::audio::Buffer& buffer, const std::vector<float>& magSpectrum, const ci::Rectf& bounds);
 
-void drawAudioBuffer( const ci::audio::Buffer &buffer, const ci::Rectf &bounds, bool drawFrame = false, const ci::ColorA &color = ci::ColorA( 0, 0.9f, 0, 1 ) );
+double getVerticeValueCircle(glm::vec2 vertice, glm::vec2 origin);
+double getVerticeValueHeart(glm::vec2 vertice, glm::vec2 origin);
+double getVerticeValueDiamond(glm::vec2 vertice, glm::vec2 origin);
 
-class Waveform {
-  public:
-	enum CalcMode { MIN_MAX, AVERAGE };
-    Waveform() {}
-    Waveform( const std::vector<float> &samples, const ci::ivec2 &waveSize, size_t pixelsPerVertex = 2, CalcMode mode = MIN_MAX )
-	{ load( samples.data(), samples.size(), waveSize, pixelsPerVertex, mode ); }
-    Waveform( const float *samples, size_t numSamples, const ci::ivec2 &waveSize, size_t pixelsPerVertex = 2, CalcMode mode = MIN_MAX )
-	{ load( samples, numSamples, waveSize, pixelsPerVertex, mode ); }
+//class Waveform {
+//  public:
+//	enum CalcMode { MIN_MAX, AVERAGE };
+//    Waveform() {}
+//    Waveform( const std::vector<float> &samples, const ci::ivec2 &waveSize, size_t pixelsPerVertex = 2, CalcMode mode = MIN_MAX )
+//	{ load( samples.data(), samples.size(), waveSize, pixelsPerVertex, mode ); }
+//    Waveform( const float *samples, size_t numSamples, const ci::ivec2 &waveSize, size_t pixelsPerVertex = 2, CalcMode mode = MIN_MAX )
+//	{ load( samples, numSamples, waveSize, pixelsPerVertex, mode ); }
+//
+//	void load( const float *samples, size_t numSamples, const ci::ivec2 &waveSize, size_t pixelsPerVertex = 2,
+//		CalcMode mode = MIN_MAX );
+//
+//    const ci::PolyLine2f&	getOutline() const	{ return mOutline; }
+//	ci::gl::VboMeshRef		getMesh() const		{ return mMesh; };
+//
+//    bool loaded() { return mOutline.getPoints().size() > 0; }
+//    
+//  private:
+//    ci::PolyLine2f		mOutline;
+//	ci::gl::VboMeshRef	mMesh;
+//};
 
-	void load( const float *samples, size_t numSamples, const ci::ivec2 &waveSize, size_t pixelsPerVertex = 2,
-		CalcMode mode = MIN_MAX );
-
-    const ci::PolyLine2f&	getOutline() const	{ return mOutline; }
-	ci::gl::VboMeshRef		getMesh() const		{ return mMesh; };
-
-    bool loaded() { return mOutline.getPoints().size() > 0; }
-    
-  private:
-    ci::PolyLine2f		mOutline;
-	ci::gl::VboMeshRef	mMesh;
-};
-
-class WaveformPlot {
-  public:
-	WaveformPlot( const ci::ColorA &colorMinMax = ci::ColorA::gray( 0.5f ), const ci::ColorA &colorAverage = ci::ColorA::gray( 0.75f ) ) : mColorMinMax( colorMinMax ), mColorAverage( colorAverage )	{}
-
-	void load( const std::vector<float> &samples, const ci::Rectf &bounds, size_t pixelsPerVertex = 2 );
-
-	void load( const ci::audio::BufferRef &buffer, const ci::Rectf &bounds, size_t pixelsPerVertex = 2 );
-
-	const std::vector<Waveform>& getWaveforms() const	{ return mWaveforms; }
-	const ci::Rectf& getBounds() const					{ return mBounds; }
-
-	void draw();
-
-	void clear()	{ 	mWaveforms.clear(); }
-
-  private:
-	std::vector<Waveform> mWaveforms;
-	ci::Rectf mBounds;
-	ci::ColorA mColorMinMax, mColorAverage;
-};
+//class WaveformPlot {
+//  public:
+//	WaveformPlot( const ci::ColorA &colorMinMax = ci::ColorA::gray( 0.5f ), const ci::ColorA &colorAverage = ci::ColorA::gray( 0.75f ) ) : mColorMinMax( colorMinMax ), mColorAverage( colorAverage )	{}
+//
+//	void load( const std::vector<float> &samples, const ci::Rectf &bounds, size_t pixelsPerVertex = 2 );
+//
+//	void load( const ci::audio::BufferRef &buffer, const ci::Rectf &bounds, size_t pixelsPerVertex = 2 );
+//
+//	const std::vector<Waveform>& getWaveforms() const	{ return mWaveforms; }
+//	const ci::Rectf& getBounds() const					{ return mBounds; }
+//
+//	void draw();
+//
+//	void clear()	{ 	mWaveforms.clear(); }
+//
+//  private:
+//	std::vector<Waveform> mWaveforms;
+//	ci::Rectf mBounds;
+//	ci::ColorA mColorMinMax, mColorAverage;
+//};
 
 class SpectrumPlot {
   public:
