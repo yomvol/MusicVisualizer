@@ -43,6 +43,6 @@
 *.db
 *.db-shm
 *.db-wal
-*.VC.db
-*.VC.db-shm
-*.VC.db-wal
+Browse.VC.db
+Browse.VC.db-shm
+Browse.VC.db-wal
