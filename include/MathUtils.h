@@ -1,6 +1,8 @@
 #pragma once
 #include <utility>
 
+// These utilities are useful for multithreading
+
 const double MATH_PI = 3.1415926535;
 
 typedef std::pair<double, double> Point; // first must represent x and second must represent y for Cartesian coordinate frames

@@ -19,179 +19,22 @@ namespace MS
 		gl::drawSolidCircle(drawingOrigin, 5);
 
 		gl::color(0, 255.0f, 0); // With which color do we draw?
-		const unsigned int min_per_thread = 50; // One thread works out minimum {number} cells
-		const unsigned int max_threads = (myGrid->mResolutionX * myGrid->mResolutionY) / min_per_thread;
-		const unsigned int hardware_threads = thread::hardware_concurrency();
-		unsigned int num_threads = min(hardware_threads != 0 ? hardware_threads : 4, max_threads);
-		unsigned int num_threads_P2 = 1; // Number of threads adjusted to the nearest lesser power of two
-		while (num_threads >>= 1) // While(`k` >>= 1) n = n << 1 double `k` and divide `n` in half till it becomes 0
-			num_threads_P2 = num_threads_P2 << 1;
-		vector<thread> threads;
-		vector<vec2> points;
-		computeRecursiveSquares(myGrid, num_threads_P2, threads, implicitFunction, drawingOrigin, points);
-
-		list<ContourPoint> toBeSortedPoints;
-
-		for (auto iter = threads.begin(); iter < threads.end(); ++iter)
-		{
-			iter->join();
-		}
-
-		// There must be some kind of sorting, because points append into the collection in a random order
-		
-		for (auto iter = points.begin(); iter < points.end(); ++iter)
-		{
-			ContourPoint cPoint;
-			cPoint.screenCartCoords.x = iter->x;
-			cPoint.screenCartCoords.y = iter->y;
-			Point result = getNewCoordsFromCartesianToCartesian(Point(drawingOrigin.x, drawingOrigin.y),
-				Point(cPoint.screenCartCoords.x, cPoint.screenCartCoords.y));
-
-			Point polarForm = fromCartesianToPolar(result);
-			cPoint.pointPolarCoords.x = polarForm.first; // Radius-vector
-			cPoint.pointPolarCoords.y = polarForm.second; // Angle
-			toBeSortedPoints.push_back(cPoint);
-		}
-
-		toBeSortedPoints.sort(comparator);
+		vector<vec2> contourPoints;
+		marchingProcessing(*myGrid, drawingOrigin, contourPoints, implicitFunction);
 
 		// Drawing here with resulting points
 		Path2d contour;
-		auto pointIter = toBeSortedPoints.begin();
-		contour.moveTo(pointIter->screenCartCoords);
+		auto pointIter = contourPoints.begin();
+		contour.moveTo(*pointIter);
 		pointIter++;
-		for (pointIter; pointIter != toBeSortedPoints.end(); ++pointIter)
+		for (pointIter; pointIter < contourPoints.end(); ++pointIter)
 		{
-			contour.lineTo(pointIter->screenCartCoords);
+			contour.lineTo(*pointIter);
 		}
+		gl::draw(contour);
 
 		delete myGrid;
 		gl::color(255.0f, 255.0f, 255.0f);
-	}
-
-	bool comparator(ContourPoint first, ContourPoint second)
-	{
-		if (first.pointPolarCoords.y <= second.pointPolarCoords.y)
-			return true;
-		else
-			return false;
-	}
-
-	int scrollCipher(int input)
-	{
-		if (input == 0) // 00
-			return 10; // 10
-		else if (input == 10)
-			return 1; // 01
-		else if (input == 1)
-			return 11; // 11
-		else if (input == 11)
-			return 0; // back to 00
-		else
-			return 999; // sign of unwanted input 
-	}
-
-	void fromCipherToCellNumber(int pointCipher, pair<int, int>& result, int cellsInClusterX, int cellsInClusterY)
-	{
-		switch (pointCipher)
-		{
-		case 0: // 00
-			result.first = 0; // x
-			result.second = 0; // y
-			break;
-		case 1: // 01
-			result.first = 0; // x
-			result.second = cellsInClusterY; // y
-			break;
-		case 2: // 02
-			result.first = 0; // x
-			result.second = 2 * cellsInClusterY; // y
-			break;
-		case 10: // 10
-			result.first = cellsInClusterX; // x
-			result.second = 0; // y
-			break;
-		case 11: // 11
-			result.first = cellsInClusterX;
-			result.second = cellsInClusterY;
-			break;
-		case 12: // 12
-			result.first = cellsInClusterX; // x
-			result.second = 2 * cellsInClusterY; // y
-			break;
-		case 20: // 20 I won`t use this case, but include it for the sake of completeness
-			result.first = 2 * cellsInClusterX; // x
-			result.second = 0; // y
-			break;
-		case 21:
-			result.first = 2 * cellsInClusterX; // x
-			result.second = cellsInClusterY; // y
-			break;
-		case 22:
-			result.first = 2 * cellsInClusterX; // x
-			result.second = 2 * cellsInClusterY; // y
-			break;
-		default:
-			throw;
-		}
-	}
-
-	class MutexWrapper // A mutex passed over simply by reference to a thread function produces undefined behavior
-	{
-	private:
-		mutex* m;
-
-	public:
-		MutexWrapper() {
-			m = new mutex;
-		}
-		inline mutex* getMutex() { return m; }
-		~MutexWrapper() { delete m; }
-	};
-
-	void computeRecursiveSquares(Grid* grid, int num_of_threads, vector<thread>& threads,
-		std::function<double(vec2, vec2)> implicitFunction, vec2 drawingOrigin, vector<vec2>& curvePoints)
-	{
-		const unsigned int num_of_clusters_on_side = 2; // Entire screen is always split on 4 clusters
-		int startCellX = 0, startCellY = 0, endCellX = 0, endCellY = 0;
-		int cellsInClusterX = grid->mResolutionX / num_of_clusters_on_side;
-		int remainderX = grid->mResolutionX % num_of_clusters_on_side;
-		int cellsInClusterY = grid->mResolutionY / num_of_clusters_on_side;
-		int remainderY = grid->mResolutionY % num_of_clusters_on_side;
-		
-		int startCornerCode = 0;
-		pair<int, int> coords;
-		if (num_of_threads > 4) // If there are more than 4 threads, every cluster has sub-clusters
-		{
-			int reduced_num = num_of_threads - 4;
-			if (reduced_num < 1)
-				return;
-			computeRecursiveSquares(grid, reduced_num, threads, implicitFunction, drawingOrigin, curvePoints);
-		}
-		else
-		{
-			for (int i = 0; i < num_of_threads; i++)
-			{
-				fromCipherToCellNumber(startCornerCode, coords, cellsInClusterX, cellsInClusterY);
-				startCellX = coords.first;
-				startCellY = coords.second;
-				fromCipherToCellNumber(startCornerCode + 11, coords, cellsInClusterX, cellsInClusterY);
-				endCellX = coords.first;
-				endCellY = coords.second;
-				if (i == (num_of_threads - 1))
-				{
-					endCellX += remainderX;
-					endCellY += remainderY;
-				}
-				startCornerCode = scrollCipher(startCornerCode);
-
-				std::function<double(vec2, vec2)> wrapper = implicitFunction;
-				MutexWrapper muWrapper;
-				thread t(marchingProcessing, std::ref(*grid), drawingOrigin, std::ref(muWrapper), std::ref(curvePoints),
-					startCellX, startCellY, endCellX, endCellY, wrapper);
-				threads.push_back(move(t));
-			}
-		}
 	}
 
 	vec2 getEndpointByLinearInterpolation(vec2 vert0, vec2 vert1, std::function<double(vec2, vec2)> implicitFunction,
@@ -218,18 +61,14 @@ namespace MS
 			throw;
 	}
 
-	void marchingProcessing(Grid& grid, vec2 drawingOrigin, MutexWrapper& muWrapper, vector<vec2>& curvePoints,
-		int startCellX, int startCellY, int endCellX, int endCellY, std::function<double(glm::vec2, glm::vec2)> implicitFunction)
+	void marchingProcessing(Grid& grid, vec2 drawingOrigin, vector<vec2>& curvePoints,
+		std::function<double(glm::vec2, glm::vec2)> implicitFunction)
 	{
-		ci::ThreadSetup threadSetup;
-		int i = startCellX, j = startCellY;
-		for (i; i < endCellX; i++)
+		for (int i = 0; i < grid.mResolutionX; i++)
 		{
-			for (j; j < endCellY; j++)
+			for (int j = 0; j < grid.mResolutionY; j++)
 			{
-				muWrapper.getMutex()->lock();
-				Rectf cell = grid.getGrid(i, j);
-				muWrapper.getMutex()->unlock();
+				Rectf cell = grid.getCell(i, j);
 				vec2 vertice;
 				unsigned int code = 0;
 				for (int k = 0; k < 4; k++) // 4 sides of a cell
@@ -424,15 +263,13 @@ namespace MS
 				}
 				if (code != 0 && code != 15)
 				{
-					muWrapper.getMutex()->lock();
 					curvePoints.push_back(p0);
 					curvePoints.push_back(p1);
-					if (p2.length != 0)
+					if (p2.x != 0 || p2.y != 0)
 					{
 						curvePoints.push_back(p2);
 						curvePoints.push_back(p3);
 					}
-					muWrapper.getMutex()->unlock();
 				}
 			}
 		}

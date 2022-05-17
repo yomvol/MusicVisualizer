@@ -1,1 +1,54 @@
-﻿
+﻿  Marching Squares.cpp
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(67,93): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(67,66): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(67,47): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(67,32): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(84,70): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(84,32): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(83,57): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(83,31): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\Marching Squares.cpp(10,14): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\Marching Squares.cpp(12,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\Marching Squares.cpp(15,59): warning C4244: 'argument': conversion from 'const T' to 'int', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\Marching Squares.cpp(15,48): warning C4244: 'argument': conversion from 'const T' to 'int', possible loss of data
+          with
+          [
+              T=float
+          ]
+  MusicVisualizer.vcxproj -> C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\vc2019\x64\Debug\MusicVisualizer.exe

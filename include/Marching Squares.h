@@ -2,12 +2,6 @@
 #include <vector>
 #include "cinder/Rect.h"
 #include "cinder/gl/gl.h"
-#include <thread>
-#include <functional>
-#include <mutex>
-#include "cinder/Thread.h"
-#include "MathUtils.h"
-#include <list>
 
 namespace MS {
 	/*
@@ -102,26 +96,21 @@ namespace MS {
 				}
 			}
 		}
-		ci::Rectf  inline getGrid(int i, int j) { return mGrid[i][j]; }
+		ci::Rectf  inline getCell(int i, int j) { return mGrid[i][j]; }
 	};
 
-	class MutexWrapper;
+	//class MutexWrapper;
 
-	typedef struct ContourPoint
-	{
-		glm::vec2 screenCartCoords; // Cartesian coordiate frame used by Cinder to draw, originating in the upper left corner
-		glm::vec2 pointPolarCoords;
-	} ContourPoint;
+	//typedef struct ContourPoint
+	//{
+	//	glm::vec2 screenCartCoords; // Cartesian coordiate frame used by Cinder to draw, originating in the upper left corner
+	//	glm::vec2 pointPolarCoords;
+	//} ContourPoint;
 
-	bool comparator(ContourPoint first, ContourPoint second);
+	//bool comparator(ContourPoint first, ContourPoint second);
 	void marchingSquares(const ci::Rectf& bounds, double (*implicitFunction)(glm::vec2, glm::vec2), glm::vec2 drawingOrigin);
 	glm::vec2 getEndpointByLinearInterpolation(glm::vec2 vert0, glm::vec2 vert1,
 		std::function<double(glm::vec2, glm::vec2)> implicitFunction, glm::vec2 drawingOrigin);
-	void marchingProcessing(Grid& grid, glm::vec2 drawingOrigin, MutexWrapper& muWrapper, std::vector<glm::vec2>& curvePoints,
-		int startCellX, int startCellY, int endCellX, int endCellY,
-		std::function<double(glm::vec2, glm::vec2)> implicitFunction); //The processing function, which is meant to run parallelly
-	int scrollCipher(int input);
-	void fromCipherToCellNumber(int pointCipher, std::pair<int, int>& result, int cellsInClusterX, int cellsInClusterY);
-	void computeRecursiveSquares(Grid* grid, int num_of_threads, std::vector<std::thread>& threads,
-		std::function<double(glm::vec2, glm::vec2)> implicitFunction, glm::vec2 drawingOrigin, std::vector<glm::vec2>& curvePoints);
+	void marchingProcessing(Grid& grid, glm::vec2 drawingOrigin, std::vector<glm::vec2>& curvePoints,
+		std::function<double(glm::vec2, glm::vec2)> implicitFunction);
 }
