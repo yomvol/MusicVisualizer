@@ -2,6 +2,8 @@
 #include <vector>
 #include "cinder/Rect.h"
 #include "cinder/gl/gl.h"
+#include <list>
+#include <utility>
 
 namespace MS {
 	/*
@@ -99,18 +101,13 @@ namespace MS {
 		ci::Rectf  inline getCell(int i, int j) { return mGrid[i][j]; }
 	};
 
-	//class MutexWrapper;
-
-	//typedef struct ContourPoint
-	//{
-	//	glm::vec2 screenCartCoords; // Cartesian coordiate frame used by Cinder to draw, originating in the upper left corner
-	//	glm::vec2 pointPolarCoords;
-	//} ContourPoint;
-
-	//bool comparator(ContourPoint first, ContourPoint second);
-	void marchingSquares(const ci::Rectf& bounds, double (*implicitFunction)(glm::vec2, glm::vec2), glm::vec2 drawingOrigin);
+	static glm::vec2 origin_for_comparator;
+	bool comparator(glm::vec2 a, glm::vec2 b); // Returns true if the first argument goes before the second argument
+	//in the strict weak ordering it defines, and false otherwise.
+	float marchingSquares(Grid* grid, double (*implicitFunction)(glm::vec2, glm::vec2), glm::vec2 windowCenter, double _scale,
+		bool IsReversalNeeded = false);
 	glm::vec2 getEndpointByLinearInterpolation(glm::vec2 vert0, glm::vec2 vert1,
 		std::function<double(glm::vec2, glm::vec2)> implicitFunction, glm::vec2 drawingOrigin);
-	void marchingProcessing(Grid& grid, glm::vec2 drawingOrigin, std::vector<glm::vec2>& curvePoints,
+	void marchingProcessing(Grid& grid, glm::vec2 drawingOrigin, std::list<glm::vec2>& curvePoints,
 		std::function<double(glm::vec2, glm::vec2)> implicitFunction);
 }

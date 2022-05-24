@@ -177,7 +177,7 @@ void MusicVisualizerApp::draw()
 		mBoundaryRect = Rectf(0.0f + boundaryPxX, getWindowHeight() - boundaryPxY - 100.0f, getWindowWidth() - boundaryPxX,
 			0.0f + boundaryPxY);
 		//drawColorfulFlash(buffer, mMagSpectrum, mBoundaryRect, *mMask);
-		drawConcentricShapes(buffer, mMagSpectrum, mBoundaryRect);
+		drawConcentricShapes(buffer, mMagSpectrum, mBoundaryRect, getWindowCenter());
 	}
 
 	vec2 hintPos(20.0f, getWindowHeight() - 50);

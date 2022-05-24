@@ -24,11 +24,7 @@
 #include "AudioDrawUtils.h"
 
 #include "cinder/audio/Utilities.h"
-
-//#include "cinder/CinderMath.h"
-//#include "cinder/Triangulate.h"
 #include "cinder/gl/gl.h"
-//#include "cinder/gl/Batch.h"
 #include "cinder/gl/Shader.h"
 
 using namespace std;
@@ -109,19 +105,44 @@ void drawColorfulFlash(const audio::Buffer& buffer, const vector<float>& magSpec
 	gl::color(255.0f, 255.0f, 255.0f); // Restoring default color for other elements to draw
 }
 
-void drawConcentricShapes(const audio::Buffer& buffer, const vector<float>& magSpectrum, const Rectf& bounds)
+void drawConcentricShapes(const audio::Buffer& buffer, const vector<float>& magSpectrum, const Rectf& bounds, vec2 windowCenter)
 {
 	const float* channel = buffer.getChannel(0);
 	
+	const float radOffset = 30.0f;
+	// loudness influences amount of "circles", frequency spetrcum influence shapes 0 - 100
+	//  diamond, 41 - heart, 81 - 100 circle
+	int maxAmountOfContours = abs(bounds.getHeight() / radOffset);
+	//maxAmountOfContours = 20;
+	float mean = 0.0f;
+	for (size_t i = 0; i < buffer.getNumFrames(); i++) {
+		mean += audio::linearToDecibel(channel[i]);
+	}
+	mean /= buffer.getNumFrames();
+	int numOfCountours = std::round(mean * maxAmountOfContours / 100);
+	string str = "Max: " + to_string(maxAmountOfContours) + " Mean: " + to_string(mean) + " NumCont: " + to_string(numOfCountours);
+	gl::drawStringCentered(str, vec2(20, 1000));
 
-	const vec2 center = bounds.getCenter();
-	const float radOffset = 20.0f;
-	// loudness influences amount of "circles", frequency spetrcum influence shapes 0 - 1000
-	// 0 - 20 triangle, 21 - 40 square, 41 - 60 pentagon, 61 - 80 hexagon, 81 - 100 circle
-	
-	double (*implicitFunction)(vec2, vec2) = &getVerticeValueHeart;
-	vec2 circleOrigin(500, 500);
-	MS::marchingSquares(bounds, implicitFunction, circleOrigin);
+	int height = abs(bounds.getHeight());
+	//height = min(height, CANVAS_HEIGHT); // useful for debugging
+	int width = abs(bounds.getWidth());
+	//width = min(width, CANVAS_WIDTH);
+
+	MS::Grid* myGrid = new MS::Grid(width, height, bounds.x1, bounds.y2);
+	//myGrid->draw();
+
+	double (*implicitFunction)(vec2, vec2) = &getVerticeValueDiamond;
+	double scaleFactor = 1.0;
+	float initialHeight;
+	for (int j = 0; j < numOfCountours; j++)
+	{
+		float height = MS::marchingSquares(myGrid, implicitFunction, windowCenter, scaleFactor);
+		if (j == 0)
+			initialHeight = height;
+		scaleFactor = (height + 2 * radOffset) / initialHeight;
+	}
+
+	delete myGrid;
 }
 
 double getVerticeValueCircle(vec2 vertice, vec2 origin)
@@ -146,17 +167,11 @@ double getVerticeValueDiamond(vec2 vertice, vec2 origin)
 {
 	double x = vertice.x - origin.x;
 	double y = vertice.y - origin.y;
-	double a = 100.0; // size coefficients
-	double b = 100.0;
+	double a = 80.0; // size coefficients
+	double b = 120.0;
 	double result = abs(x) / a + abs(y) / b;
 	return result;
 }
-
-// ----------------------------------------------------------------------------------------------------
-// MARK: - WaveformPlot
-// ----------------------------------------------------------------------------------------------------
-
-
 
 namespace {
 

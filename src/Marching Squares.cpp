@@ -5,36 +5,86 @@ using namespace ci;
 
 namespace MS
 {
-	void marchingSquares(const Rectf& bounds, double (*implicitFunction)(vec2, vec2), vec2 drawingOrigin)
+	float marchingSquares(Grid* grid, double (*implicitFunction)(vec2, vec2), vec2 windowCenter, double _scale,
+		bool IsReversalNeeded)
 	{
-		int height = abs(bounds.getHeight());
-		//height = min(height, CANVAS_HEIGHT); // useful for debugging
-		int width = abs(bounds.getWidth());
-		//width = min(width, CANVAS_WIDTH);
-
-		Grid* myGrid = new Grid(width, height, bounds.x1, bounds.y2);
-		myGrid->draw();
-
 		gl::color(200.0f, 200.0f, 0);
-		gl::drawSolidCircle(drawingOrigin, 5);
+		gl::drawSolidCircle(windowCenter, 5);
 
 		gl::color(0, 255.0f, 0); // With which color do we draw?
-		vector<vec2> contourPoints;
-		marchingProcessing(*myGrid, drawingOrigin, contourPoints, implicitFunction);
+		list<vec2> contourPoints;
+		marchingProcessing(*grid, windowCenter, contourPoints, implicitFunction);
+		if (contourPoints.size() == 0)
+		{
+			gl::color(255.0f, 255.0f, 255.0f);
+			return 0.0f;
+		}
+			
+		// There must be some kind of sorting
+		origin_for_comparator = windowCenter;
+		contourPoints.sort(&comparator);
 
 		// Drawing here with resulting points
 		Path2d contour;
 		auto pointIter = contourPoints.begin();
 		contour.moveTo(*pointIter);
 		pointIter++;
-		for (pointIter; pointIter < contourPoints.end(); ++pointIter)
+		for (pointIter; pointIter != contourPoints.end(); ++pointIter)
 		{
 			contour.lineTo(*pointIter);
 		}
-		gl::draw(contour);
 
-		delete myGrid;
+		contour.scale(vec2(_scale, _scale), windowCenter);
+		if (IsReversalNeeded == true)
+		{
+			gl::pushMatrices();
+			gl::rotate(M_PI, windowCenter.x, 0, 0);
+			gl::translate(0, -2 * windowCenter.y);
+			gl::draw(contour);
+			gl::popMatrices();
+		}
+		else
+		{
+			gl::draw(contour);
+		}
+
+		/*gl::color(255, 0, 0); // useful for debugging
+		for (auto p : contourPoints)
+		{
+			gl::drawSolidCircle(p, 2.5);
+		}*/
+
 		gl::color(255.0f, 255.0f, 255.0f);
+		return contour.calcPreciseBoundingBox().getHeight();
+	}
+
+	bool comparator(vec2 a, vec2 b)
+	{
+		if (a.x - origin_for_comparator.x >= 0 && b.x - origin_for_comparator.x < 0)
+			return true;
+		if (a.x - origin_for_comparator.x < 0 && b.x - origin_for_comparator.x >= 0)
+			return false;
+		if (a.x - origin_for_comparator.x == 0 && b.x - origin_for_comparator.x == 0) {
+			if (a.y - origin_for_comparator.y >= 0 || b.y - origin_for_comparator.y >= 0)
+				return a.y > b.y;
+			return b.y > a.y;
+		}
+
+		// compute the cross product of vectors (center -> a) x (center -> b)
+		int det = (a.x - origin_for_comparator.x) * (b.y - origin_for_comparator.y) - (b.x - origin_for_comparator.x)
+			* (a.y - origin_for_comparator.y);
+		if (det < 0)
+			return true;
+		if (det > 0)
+			return false;
+
+		// points a and b are on the same line from the center
+		// check which point is closer to the center
+		int d1 = (a.x - origin_for_comparator.x) * (a.x - origin_for_comparator.x) + (a.y - origin_for_comparator.y)
+			* (a.y - origin_for_comparator.y);
+		int d2 = (b.x - origin_for_comparator.x) * (b.x - origin_for_comparator.x) + (b.y - origin_for_comparator.y)
+			* (b.y - origin_for_comparator.y);
+		return d1 > d2;
 	}
 
 	vec2 getEndpointByLinearInterpolation(vec2 vert0, vec2 vert1, std::function<double(vec2, vec2)> implicitFunction,
@@ -61,7 +111,7 @@ namespace MS
 			throw;
 	}
 
-	void marchingProcessing(Grid& grid, vec2 drawingOrigin, vector<vec2>& curvePoints,
+	void marchingProcessing(Grid& grid, vec2 drawingOrigin, list<vec2>& curvePoints,
 		std::function<double(glm::vec2, glm::vec2)> implicitFunction)
 	{
 		for (int i = 0; i < grid.mResolutionX; i++)
