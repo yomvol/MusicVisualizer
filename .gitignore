@@ -8,6 +8,10 @@
 # Prerequisites
 *.d
 
+# Binaries and executables
+*.bin
+*.exe
+
 # Compiled Object files
 *.slo
 *.lo
@@ -46,3 +50,4 @@
 *.VC.db
 *.VC.db-shm
 *.VC.db-wal
+*.pdb
