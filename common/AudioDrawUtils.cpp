@@ -65,9 +65,9 @@ void drawColorfulFlash(const audio::Buffer& buffer, const vector<float>& magSpec
 		color = Color(255.0f, 255.0f, 255.0f);
 	else
 	{
-		const int numOfBins = magSpectrum.size();
+		const int NUM_OF_BINS = magSpectrum.size();
 		float red = 0.0f, green = 0.0f, blue = 0.0f;
-		for (int bin = 0; bin < numOfBins; bin++)
+		for (int bin = 0; bin < NUM_OF_BINS; bin++)
 		{
 			float weight = magSpectrum[bin];
 			weight = audio::linearToDecibel(weight) / 100;
@@ -107,21 +107,142 @@ void drawColorfulFlash(const audio::Buffer& buffer, const vector<float>& magSpec
 
 void drawConcentricShapes(const audio::Buffer& buffer, const vector<float>& magSpectrum, const Rectf& bounds, vec2 windowCenter)
 {
+	// loudness influences amount of "circles", frequency spetrcum influence shapes based on Skew Factor 0 - 100
+	// the more spread out frequency bins are, the bigger is the margin between contours
+	//  diamond 0 - 33, 34 - 66 ellipse, 67 - 100 heart
+
+	const int NUM_OF_BINS = magSpectrum.size();
+	const int NUMBER_OF_GROUPS = 32; // there are 32 groups on the x axis of the histogram
+	int numberOfBinsInGroup = NUM_OF_BINS / NUMBER_OF_GROUPS;
+	deque<HistogramGroup> frequencyBinHistogram;
+	double histMean = 0.0, histMedian = 0.0, histStandardDeviation = 0.0; // estimating the mean, median and standard deviation
+	int groupCounter = 0;
+	double groupAverage = 0.0;
+	double summarizedPresence = 0.0;
+	vector<double> peaks;
+	double maxWeight = 45.0; // this value is open for tuning
+	for (int bin = 0; bin < NUM_OF_BINS; bin++)
+	{
+		double weight = magSpectrum[bin];
+		weight = audio::linearToDecibel(weight); // value between [0;100]
+		if (weight >= maxWeight)
+		{
+			if (weight - maxWeight >= 10.0)
+			{
+				maxWeight = weight;
+				peaks.clear();
+			}
+			peaks.push_back(bin);
+		}
+		groupAverage += weight;
+		if ((bin + 1) % numberOfBinsInGroup == 0)
+		{
+			groupAverage = groupAverage / numberOfBinsInGroup;
+			HistogramGroup group;
+			group.presence = groupAverage;
+			group.firstBin = groupCounter * numberOfBinsInGroup;
+			group.lastBin = (groupCounter + 1) * numberOfBinsInGroup - 1;
+			frequencyBinHistogram.push_back(group);
+			groupAverage = 0.0;
+			groupCounter++;
+			histMean += group.presence * (group.firstBin + group.lastBin) / 2;
+			summarizedPresence += group.presence;
+		}
+	}
+
+	histMean = histMean / summarizedPresence;
+	double medianClassValue = summarizedPresence / 2;
+	int medianClass = medianClassValue / numberOfBinsInGroup; // this number equals the number of the group which has the median
+	double presenceUpToMedianClass = 0.0;
+	groupCounter = 0;
+	for (HistogramGroup gr : frequencyBinHistogram)
+	{
+		if (groupCounter == medianClass)
+		{
+			histMedian = gr.firstBin + (gr.lastBin - gr.firstBin) * ((medianClassValue - presenceUpToMedianClass) / gr.presence);
+		}
+		histStandardDeviation += gr.presence * pow((gr.firstBin + gr.lastBin) / 2 - histMean, 2.0);
+		presenceUpToMedianClass += gr.presence;
+		groupCounter++;
+	}
+	histStandardDeviation /= summarizedPresence - 1;
+	histStandardDeviation = sqrt(histStandardDeviation);
+
+	double skew = 0.0; // alternative Pearson Mode Skewness.
+	//A symmetrical distribution has a skew of zero. A positive result means that data is right skewed.
+	//A negative results means that data is left skewed.
+	if (histMean >= 1) // if mean doesn`t equal zero
+		skew = 3 * (histMean - histMedian) / histStandardDeviation;
+	int skewFactor = (skew - (-0.2)) * 100 / (1 - (-0.2)) - 0.2;
+	// skew usually ranges from -0.2 to 1, Skew Fsctor must range from 0 to 100.
+	if (skewFactor < 0)
+		skewFactor = 0;
+	if (skewFactor > 100)
+		skewFactor = 100;
+
+	// for ellipse A and B from 1.0 to 10.0, for diamond around 80 and 200, for heart around 80 to 100
+	double geomFactorA, geomFactorB; // A is associated with x-es, B is for y-es
+	//skewFactor = 10;
+	double (*implicitFunction)(vec2, vec2, double, double);
+	bool isReversed = false;
+	double coefficientA = 0.0, coefficientB = 0.0, summarizedPeaksDistA = 0.0, summarizedPeaksDistB = 0.0;
+	int counter = 0;
+	if (peaks.size() >= 2)
+	{
+		for (auto peak : peaks)
+		{
+			if (counter < peaks.size() / 2)
+			{
+				// lower freq => bigger x-es, smaller y-es
+				summarizedPeaksDistA += peak - histMedian;
+			}
+			else // if counter >=
+			{
+				// higher freq => smaller x-es, bigger y-es
+				summarizedPeaksDistB += peak - histMedian;
+			}
+			counter++;
+		}
+		coefficientA = abs(summarizedPeaksDistA) / 1023 / 6;
+		coefficientB = abs(summarizedPeaksDistB) / 1023 / 6;
+	}
+	if (skewFactor <= 33)
+	{
+		implicitFunction = &getVerticeValueDiamond;
+		geomFactorA = 80.0 + 120.0 * coefficientA;
+		geomFactorB = 120.0 + 80 * coefficientB;
+	}
+	else if (skewFactor <= 66)
+	{
+		implicitFunction = &getVerticeValueEllipse;
+		geomFactorA = 1.0 + 5.0 * coefficientA;
+		geomFactorB = 1.0 + 5.0 * coefficientB;
+	}
+	else
+	{
+		implicitFunction = &getVerticeValueHeart;
+		isReversed = true;
+		geomFactorA = 80.0 + 20.0 * coefficientA;
+		geomFactorB = 80.0 + 20.0 * coefficientB;
+	}
+
 	const float* channel = buffer.getChannel(0);
-	
-	const float radOffset = 30.0f;
-	// loudness influences amount of "circles", frequency spetrcum influence shapes 0 - 100
-	//  diamond, 41 - heart, 81 - 100 circle
-	int maxAmountOfContours = abs(bounds.getHeight() / radOffset);
-	//maxAmountOfContours = 20;
+	// transforming standard deviation in range [0;1023] to a number in range [1;1.5]
+	double rangeFactor = 1.0;
+	if (histStandardDeviation >= 0)
+		rangeFactor = histStandardDeviation * (1.5 - 1) / 400 + 1; // let standard deviation be [0;400] approximatelly
+	float contourMargin = 20.0f * rangeFactor; // 20 and 30 pixels are okay values, using 20.0 as the base
+	int maxAmountOfContours = abs(bounds.getHeight() / 2 / 2 / contourMargin);
 	float mean = 0.0f;
 	for (size_t i = 0; i < buffer.getNumFrames(); i++) {
 		mean += audio::linearToDecibel(channel[i]);
 	}
 	mean /= buffer.getNumFrames();
-	int numOfCountours = std::round(mean * maxAmountOfContours / 100);
-	string str = "Max: " + to_string(maxAmountOfContours) + " Mean: " + to_string(mean) + " NumCont: " + to_string(numOfCountours);
-	gl::drawStringCentered(str, vec2(20, 1000));
+	double numOfCountoursCoeff = (mean - 20.0) / (40.0 - 20.0); // mean usually hangs out around 20 ~ 40, coeff must be [0;1]
+	int numOfCountours = std::round(numOfCountoursCoeff * maxAmountOfContours);
+	//string str = "Max: " + to_string(maxAmountOfContours) + " Mean: " + to_string(mean) + " NumCont: " + to_string(numOfCountours)
+	//	+ " Skew: " + to_string(skew);
+	//gl::drawString(str, vec2(20, 40), ColorA(1, 1, 1, 1), Font("Helvetica", 30.0f)); // useful for debugging
 
 	int height = abs(bounds.getHeight());
 	//height = min(height, CANVAS_HEIGHT); // useful for debugging
@@ -131,155 +252,45 @@ void drawConcentricShapes(const audio::Buffer& buffer, const vector<float>& magS
 	MS::Grid* myGrid = new MS::Grid(width, height, bounds.x1, bounds.y2);
 	//myGrid->draw();
 
-	double (*implicitFunction)(vec2, vec2) = &getVerticeValueDiamond;
 	double scaleFactor = 1.0;
 	float initialHeight;
 	for (int j = 0; j < numOfCountours; j++)
 	{
-		float height = MS::marchingSquares(myGrid, implicitFunction, windowCenter, scaleFactor);
+		float height = MS::marchingSquares(myGrid, implicitFunction, windowCenter, scaleFactor, geomFactorA, geomFactorB, isReversed);
 		if (j == 0)
 			initialHeight = height;
-		scaleFactor = (height + 2 * radOffset) / initialHeight;
+		scaleFactor = (height + 2 * contourMargin) / initialHeight;
 	}
-
 	delete myGrid;
 }
 
-double getVerticeValueCircle(vec2 vertice, vec2 origin)
+double getVerticeValueEllipse(vec2 vertice, vec2 origin, double a, double b)
 {
-	// Circle: (y-y_0)^2 + (x-x_0)^2 = r^2 -- the most basic implicit function
-	// r^2 / ((y-y_0)^2 + (x-x_0)^2) = 1
+	// Ellipse: (y-y_0)^2 / a + (x-x_0)^2 / b = r^2 -- the most basic implicit function
+	// r^2 / ((y-y_0)^2 / a + (x-x_0)^2 / b) = 1
 	double r = 100.0;
-	double result = pow(r, 2.0) / (pow(vertice.y - origin.y, 2) + pow(vertice.x - origin.x, 2));
+	double result = pow(r, 2.0) / (pow(vertice.y - origin.y, 2) / b + pow(vertice.x - origin.x, 2) / a);
 	return result;
 }
 
-double getVerticeValueHeart(vec2 vertice, vec2 origin)
+double getVerticeValueHeart(vec2 vertice, vec2 origin, double a, double b)
 {
 	// Heart implicit equation:  (x/a)^2+[y/b-((x/a)^2)^(1/3)]^2 = 1, 
-	const double a = 100.0;
-	const double b = 100.0;
+	/*const double a = 100.0;
+	const double b = 100.0;*/
 	double result = pow(abs(vertice.x - origin.x) / a, 2) + pow((vertice.y - origin.y) / b - pow(abs(vertice.x - origin.x) / a, 0.66), 2);
 	return result;
 }
 
-double getVerticeValueDiamond(vec2 vertice, vec2 origin)
+double getVerticeValueDiamond(vec2 vertice, vec2 origin, double a, double b)
 {
 	double x = vertice.x - origin.x;
 	double y = vertice.y - origin.y;
-	double a = 80.0; // size coefficients
-	double b = 120.0;
+	//double a = 80.0; // size coefficients
+	//double b = 120.0;
 	double result = abs(x) / a + abs(y) / b;
 	return result;
 }
-
-namespace {
-
-inline void calcMinMaxForSection( const float *buffer, size_t samplesPerSection, float &max, float &min ) {
-	max = 0;
-	min = 0;
-	for( size_t k = 0; k < samplesPerSection; k++ ) {
-		float s = buffer[k];
-		max = math<float>::max( max, s );
-		min = math<float>::min( min, s );
-	}
-}
-
-inline void calcAverageForSection( const float *buffer, size_t samplesPerSection, float &upper, float &lower ) {
-	upper = 0;
-	lower = 0;
-	for( size_t k = 0; k < samplesPerSection; k++ ) {
-		float s = buffer[k];
-		if( s > 0 ) {
-			upper += s;
-		} else {
-			lower += s;
-		}
-	}
-	upper /= samplesPerSection;
-	lower /= samplesPerSection;
-}
-
-} // anonymouse namespace
-
-//void Waveform::load( const float *samples, size_t numSamples, const ci::ivec2 &waveSize, size_t pixelsPerVertex, CalcMode mode )
-//{
-//    float height = waveSize.y / 2.0f;
-//    size_t numSections = waveSize.x / pixelsPerVertex + 1;
-//    size_t samplesPerSection = numSamples / numSections;
-//
-//	vector<vec2> &points = mOutline.getPoints();
-//	points.resize( numSections * 2 );
-//
-//    for( size_t i = 0; i < numSections; i++ ) {
-//		float x = (float)i * pixelsPerVertex;
-//		float yUpper, yLower;
-//		if( mode == CalcMode::MIN_MAX ) {
-//			calcMinMaxForSection( &samples[i * samplesPerSection], samplesPerSection, yUpper, yLower );
-//		} else {
-//			calcAverageForSection( &samples[i * samplesPerSection], samplesPerSection, yUpper, yLower );
-//		}
-//		points[i] = vec2( x, height - height * yUpper );
-//		points[numSections * 2 - i - 1] = vec2( x, height - height * yLower );
-//    }
-//	mOutline.setClosed();
-//
-//	mMesh = gl::VboMesh::create( Triangulator( mOutline ).calcMesh() );
-//}
-
-
-//void WaveformPlot::load( const std::vector<float> &samples, const ci::Rectf &bounds, size_t pixelsPerVertex )
-//{
-//	mBounds = bounds;
-//	mWaveforms.clear();
-//
-//	ivec2 waveSize = bounds.getSize();
-//	mWaveforms.push_back( Waveform( samples, waveSize, pixelsPerVertex, Waveform::CalcMode::MIN_MAX ) );
-//	mWaveforms.push_back( Waveform( samples, waveSize, pixelsPerVertex, Waveform::CalcMode::AVERAGE ) );
-//}
-//
-//void WaveformPlot::load( const audio::BufferRef &buffer, const ci::Rectf &bounds, size_t pixelsPerVertex )
-//{
-//	mBounds = bounds;
-//	mWaveforms.clear();
-//
-//	size_t numChannels = buffer->getNumChannels();
-//	ivec2 waveSize = bounds.getSize();
-//	waveSize.y /= numChannels;
-//	for( size_t ch = 0; ch < numChannels; ch++ ) {
-//		mWaveforms.push_back( Waveform( buffer->getChannel( ch ), buffer->getNumFrames(), waveSize, pixelsPerVertex, Waveform::CalcMode::MIN_MAX ) );
-//		mWaveforms.push_back( Waveform( buffer->getChannel( ch ), buffer->getNumFrames(), waveSize, pixelsPerVertex, Waveform::CalcMode::AVERAGE ) );
-//	}
-//}
-//
-//void WaveformPlot::draw()
-//{
-//	auto &waveforms = getWaveforms();
-//	if( waveforms.empty() ) {
-//		return;
-//	}
-//
-//	gl::ScopedGlslProg glslScope( getStockShader( gl::ShaderDef().color() ) );
-//
-//	gl::color( mColorMinMax );
-//	gl::draw( waveforms[0].getMesh() );
-//
-//	gl::color( mColorAverage );
-//	gl::draw( waveforms[1].getMesh() );
-//
-//	if( waveforms.size() > 2 ) {
-//		gl::pushMatrices();
-//		gl::translate( 0, getBounds().getHeight() / 2 );
-//
-//		gl::color( mColorMinMax );
-//		gl::draw( waveforms[2].getMesh() );
-//
-//		gl::color( mColorAverage );
-//		gl::draw( waveforms[3].getMesh() );
-//		
-//		gl::popMatrices();
-//	}
-//}
 
 // ----------------------------------------------------------------------------------------------------
 // MARK: - SpectrumPlot
@@ -339,4 +350,5 @@ void SpectrumPlot::draw( const vector<float> &magSpectrum )
 		gl::color( mBorderColor );
 		gl::drawStrokedRect( mBounds );
 	}
+	gl::color(255.0f, 255.0f, 255.0f);
 }

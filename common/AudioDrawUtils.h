@@ -43,30 +43,16 @@ void drawColorfulFlash(const ci::audio::Buffer& buffer, const std::vector<float>
 void drawConcentricShapes(const ci::audio::Buffer& buffer, const std::vector<float>& magSpectrum, const ci::Rectf& bounds,
 	glm::vec2 windowCenter);
 
-double getVerticeValueCircle(glm::vec2 vertice, glm::vec2 origin);
-double getVerticeValueHeart(glm::vec2 vertice, glm::vec2 origin);
-double getVerticeValueDiamond(glm::vec2 vertice, glm::vec2 origin);
+double getVerticeValueEllipse(glm::vec2 vertice, glm::vec2 origin, double a, double b);
+double getVerticeValueHeart(glm::vec2 vertice, glm::vec2 origin, double a, double b);
+double getVerticeValueDiamond(glm::vec2 vertice, glm::vec2 origin, double a, double b);
 
-//class WaveformPlot {
-//  public:
-//	WaveformPlot( const ci::ColorA &colorMinMax = ci::ColorA::gray( 0.5f ), const ci::ColorA &colorAverage = ci::ColorA::gray( 0.75f ) ) : mColorMinMax( colorMinMax ), mColorAverage( colorAverage )	{}
-//
-//	void load( const std::vector<float> &samples, const ci::Rectf &bounds, size_t pixelsPerVertex = 2 );
-//
-//	void load( const ci::audio::BufferRef &buffer, const ci::Rectf &bounds, size_t pixelsPerVertex = 2 );
-//
-//	const std::vector<Waveform>& getWaveforms() const	{ return mWaveforms; }
-//	const ci::Rectf& getBounds() const					{ return mBounds; }
-//
-//	void draw();
-//
-//	void clear()	{ 	mWaveforms.clear(); }
-//
-//  private:
-//	std::vector<Waveform> mWaveforms;
-//	ci::Rectf mBounds;
-//	ci::ColorA mColorMinMax, mColorAverage;
-//};
+typedef struct HistogramGroup
+{
+	double presence; // weight of this group of frequency bins
+	double firstBin;
+	double lastBin; // numbers of the the first and last frequency bins. For example, [0-31], [32-63], [64-127]
+} HistogramGroup;
 
 class SpectrumPlot {
   public:

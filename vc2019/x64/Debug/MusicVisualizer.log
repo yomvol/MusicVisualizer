@@ -1,4 +1,4 @@
-﻿  AudioDrawUtils.cpp
+﻿  MusicVisualizerApp.cpp
 C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(69,93): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
           with
           [
@@ -39,35 +39,50 @@ C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\include\Marching Squares.h(85,
           [
               T=float
           ]
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(68,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(68,43): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(74,47): warning C4244: '+=': conversion from '_Ty' to 'float', possible loss of data
-          with
-          [
-              _Ty=double
-          ]
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(75,52): warning C4244: '+=': conversion from '_Ty' to 'float', possible loss of data
-          with
-          [
-              _Ty=double
-          ]
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(76,49): warning C4244: '+=': conversion from '_Ty' to 'float', possible loss of data
-          with
-          [
-              _Ty=double
-          ]
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(115,26): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(122,21): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(126,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(128,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(131,66): warning C4244: 'argument': conversion from 'const T' to 'int', possible loss of data
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(86,21): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\common\AudioDrawUtils.cpp(131,55): warning C4244: 'argument': conversion from 'const T' to 'int', possible loss of data
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(85,68): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
           with
           [
               T=float
           ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(85,34): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(84,83): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(192,21): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(191,68): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(191,34): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(190,57): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.29.30133\include\memory(3416,56): warning C4244: 'argument': conversion from '_Ty' to 'float', possible loss of data
+          with
+          [
+              _Ty=size_t
+          ]
+C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\src\MusicVisualizerApp.cpp(96): message : see reference to function template instantiation 'std::unique_ptr<RGBMask,std::default_delete<RGBMask>> std::make_unique<RGBMask,size_t,0>(size_t &&)' being compiled
   MusicVisualizer.vcxproj -> C:\Users\yomvol\Desktop\Portfolio\MusicVisualizer\vc2019\x64\Debug\MusicVisualizer.exe

@@ -19,6 +19,7 @@ public:
 	void draw() override;
 	void mouseWheel(MouseEvent event) override;
 	void mouseDrag(MouseEvent event) override;
+	void keyDown(KeyEvent event) override;
 
 private:
 	audio::ContextRef ctx;
@@ -33,13 +34,15 @@ private:
 	Rectf mBoundaryRect;
 	unique_ptr<RGBMask> mMask;
 	unique_ptr<SliderControl> mSlider;
+	SpectrumPlot mSpectrumPlot;
+	int visualizationMode = 0;
 };
 
 void MusicVisualizerApp::setup()
 {
 	audio::SourceFileRef sourceFile;
 	DataSourceRef file;
-#define FILE_BROWSING 0
+#define FILE_BROWSING 1
 #if FILE_BROWSING
 	vector<string> supportedExtensions;
 	supportedExtensions.push_back("wav");
@@ -56,7 +59,8 @@ void MusicVisualizerApp::setup()
 		terminate();
 	}
 #else
-	file = loadAsset("watching-the-waves.wav");
+	//file = loadAsset("watching-the-waves.wav");
+	file = loadAsset("Richard Wagner - The Flight of the Valkyries.flac");
 #endif
 	try {
 		sourceFile = audio::load(file);
@@ -100,6 +104,7 @@ void MusicVisualizerApp::setup()
 	auto bounds = Display::getMainDisplay()->getBounds();
 	getWindow()->setSize(bounds.getWidth() - 100, bounds.getHeight() - 100);
 	getWindow()->setPos(bounds.getX1() + 30, bounds.getY1() + 40);
+	setFrameRate(60.0f);
 }
 
 void MusicVisualizerApp::mouseDown(MouseEvent event)
@@ -154,8 +159,31 @@ void MusicVisualizerApp::mouseWheel(MouseEvent event)
 	mVolumeControl->setValue(volume);
 }
 
+void MusicVisualizerApp::keyDown(KeyEvent event)
+{
+	int result = event.getCode();
+	switch (result)
+	{
+	case KeyEvent::KEY_1:
+		visualizationMode = 0;
+		break;
+	case KeyEvent::KEY_2:
+		visualizationMode = 1;
+		break;
+	case KeyEvent::KEY_3:
+		visualizationMode = 2;
+		break;
+	default:
+		break;
+	}
+}
+
 void MusicVisualizerApp::update()
 {
+	float boundaryPxX = 16.0f * 1;
+	float boundaryPxY = 9.0f * 1;
+	mBoundaryRect = Rectf(0.0f + boundaryPxX, getWindowHeight() - boundaryPxY - 100.0f, getWindowWidth() - boundaryPxX,
+		0.0f + boundaryPxY);
 	if (mSpectrMonitor && mSpectrMonitor->getNumConnectedInputs())
 		mMagSpectrum = mSpectrMonitor->getMagSpectrum();
 	int rectLength = 150, rightXOffset = 50, rectHeight = 8, bottomYOffset = 30;
@@ -167,22 +195,28 @@ void MusicVisualizerApp::update()
 void MusicVisualizerApp::draw()
 {
 	gl::clear(Color(0, 0, 0));
-	
-	const audio::Buffer& buffer = mPCMMonitor->getBuffer();
-	console() << mPCMMonitor->getWindowSize() << endl << mPCMMonitor->getNumConnectedInputs() << endl;
-	if (mPCMMonitor && mPCMMonitor->getNumConnectedInputs())
+	gl::enableAlphaBlending();
+
+	if (!isPaused)
 	{
-		float boundaryPxX = 16.0f * 1;
-		float boundaryPxY = 9.0f * 1;
-		mBoundaryRect = Rectf(0.0f + boundaryPxX, getWindowHeight() - boundaryPxY - 100.0f, getWindowWidth() - boundaryPxX,
-			0.0f + boundaryPxY);
-		//drawColorfulFlash(buffer, mMagSpectrum, mBoundaryRect, *mMask);
-		drawConcentricShapes(buffer, mMagSpectrum, mBoundaryRect, getWindowCenter());
+		const audio::Buffer& buffer = mPCMMonitor->getBuffer();
+		console() << mPCMMonitor->getWindowSize() << endl << mPCMMonitor->getNumConnectedInputs() << endl;
+		if (mPCMMonitor && mPCMMonitor->getNumConnectedInputs())
+		{
+			if (visualizationMode == 0)
+				drawColorfulFlash(buffer, mMagSpectrum, mBoundaryRect, *mMask);
+			else if (visualizationMode == 1)
+				drawConcentricShapes(buffer, mMagSpectrum, mBoundaryRect, getWindowCenter());
+			else if (visualizationMode == 2)
+			{
+				mSpectrumPlot.setBounds(mBoundaryRect);
+				mSpectrumPlot.draw(mMagSpectrum);
+			}
+		}
 	}
 
 	vec2 hintPos(20.0f, getWindowHeight() - 50);
-	gl::drawString("Press LMB to pause track, use mouse wheel to control sound volume", hintPos, ColorA(1, 1, 1, 1),
-		Font("Helvetica", 30.0f));
+	gl::drawString("Press LMB to pause track, use mouse wheel to control sound volume, press 1, 2 or 3 to switch visualization mode", hintPos, ColorA(1, 1, 1, 1), Font("Helvetica", 30.0f));
 	mSlider->drawSlider();
 }
 
