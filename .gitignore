@@ -8,10 +8,6 @@
 # Prerequisites
 *.d
 
-# Binaries and executables
-*.bin
-*.exe
-
 # Compiled Object files
 *.slo
 *.lo
