@@ -2,6 +2,12 @@ This music visualizer has been made in order to practice in creating C++ desktop
 
 Upon opening choose a track. Supported file types are the following: .wav, .mp3, .mp4, .m4a, .flac.
 
+NOTICE: All demonstrative gifs are recorded in 20 fps and may not depict actual user experience.
+
+![1](https://user-images.githubusercontent.com/83629932/171857696-3859aad0-8a2e-4e8c-8bbd-36260a24422a.gif)
+![2](https://user-images.githubusercontent.com/83629932/171857317-de2f649f-e7b2-45cc-9643-bb8c4284ffeb.gif)
+![3](https://user-images.githubusercontent.com/83629932/171857358-223a7473-5c6e-4b7e-b9ed-e9c0bb5f174d.gif)
+
 Copyright (c) 2014, The Cinder Project
 
  This code is intended to be used with the Cinder C++ library, http://libcinder.org
